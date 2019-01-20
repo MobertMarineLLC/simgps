@@ -20,6 +20,8 @@
         You should have received a copy of the GNU General Public License
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+                19 Jan 2019 - Forked from LukeJohnston/simgps
+                19 Jan 2019 - Added Generic GPGPS NMEA Sentence to output to support AIS transponders
 
 """
 
@@ -126,13 +128,13 @@ class SimGPSApp:
                 ports = findSerialPorts()
                 self.serialVar = StringVar(master)
                 if not ports:
-                        ports = ["No ports found"]
-                self.serialVar.set(ports[0])
-                self.serialMenu = apply(OptionMenu, (midFrame, self.serialVar)\
+			ports = ["No Ports"]
+                self.serialVar.set("/dev/ttys0")
+		self.serialMenu = apply(OptionMenu, (midFrame, self.serialVar)\
                                         + tuple(ports))
                 self.serialMenu.pack(side = LEFT)
                 self.baudVar = StringVar()
-                self.baudVar.set("57600")
+                self.baudVar.set("4800")
                 self.baudBox = Entry(midFrame, textvariable = self.baudVar)
                 self.baudBox.pack(side = LEFT)
 
@@ -144,7 +146,7 @@ class SimGPSApp:
                                           "2D Fix", "3D Fix")
                 self.fixType.pack(side = LEFT)
                 self.speedVar = StringVar()
-                self.speedVar.set("100")
+                self.speedVar.set("10")
                 self.speedBox = Entry(botFrame, textvariable = self.speedVar, 
                                       justify = RIGHT)
                 self.speedBox.pack(side = LEFT)
@@ -243,6 +245,7 @@ class PathSim:
                         #print sentence
                         self.ser.write(sentence)
                         print self.ser.read(1000)
+
                 except StopIteration:
                         self.count += 1
                         if self.count >= len(self.path):
@@ -279,7 +282,6 @@ class PathSim:
                         lonchar = "E"
                 else:
                         lonchar = "W"
-
                 gga = "GPGGA,%s,%f,%s,%f,%s,2,08,6.8,10.0,M,1.0,M,,0000" %\
                        (timestr, latminutes, latchar, lonminutes, lonchar)
                 rmc = "GPRMC,%s,A,%f,%s,%f,%s,%f,%d,%s,,,," %\
@@ -304,9 +306,13 @@ class PathSim:
                 for i in gsa:
                         gsachecksum ^= ord(i)
 
-                return "$%s*%x\r\n$%s*%x\r\n$%s*%x\r\n" %\
-                       (gga, ggachecksum & 0xff, rmc, rmcchecksum & 0xff, gsa,\
-                        gsachecksum & 0xff)
+		gbs = "GPGBS,015509.00,-0.031,-0.186,0.219,19,0.000,-0.354,6.972"
+		gbschecksum = 0
+	    	for i in gbs:
+                        gbschecksum ^= ord(i)
+
+                return "$%s*%x\r\n$%s*%x\r\n$%s*%x\r\n$%s*%x\r\n" %\
+                       (gga, ggachecksum & 0xff, rmc, rmcchecksum & 0xff, gsa, gsachecksum & 0xff, gbs, gbschecksum & 0xff)
 
         def open_file(self, filename):
                 """
