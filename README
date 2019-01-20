@@ -8,3 +8,5 @@ To run simgps you'll need:
 
 Python 2.6
 pyserial v2.5 for python2.6
+
+This fork is for changes needed to create a GPS simulator for an AIS Transponder to be used in demo environments.
